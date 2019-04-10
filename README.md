@@ -1,4 +1,4 @@
-# NewsCloud
+# News Cloud
 : 다양한 언론사 및 기사의 핵심을 빠르게 이해하자
 
 
