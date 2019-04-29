@@ -107,11 +107,7 @@ public class Rserve_C {
 			   return subCate;
 		   }
 		   public String getDescription(String str) {
-			   if(str == "summary1") {
-				   return cate;
-			   } else {
-				   return subCate;
-			   }
+			   return str;
 		   }
 		      
 		   public void assignPress(String p1, String p2) {
