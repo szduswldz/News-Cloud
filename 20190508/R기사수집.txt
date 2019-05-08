@@ -1,0 +1,42 @@
+setwd("C:/RPrj")
+library(N2H4)
+cate<-getMainCategory()        
+tcate<-cate$sid1[6]                 
+subCate<-cbind(sid1=tcate,getSubCategory(sid1=tcate))    
+tscate<-subCate$sid2[1]    
+strDate<-"20190508"      
+newsData<-c()
+
+
+
+for (sid1 in tcate){
+    for (sid2 in tscate){
+      pageUrl<-paste0("http://news.naver.com/main/list.nhn?sid2=",sid2,"&sid1=",sid1,"&mid=shm&mode=LS2D&date=",strDate)
+      max<-getMaxPageNum(pageUrl)
+      
+      for (pageNum in 1:max){
+        pageUrl<-paste0("http://news.naver.com/main/list.nhn?sid2=",sid2,"&sid1=",sid1,"&mid=shm&mode=LS2D&date=",strDate,"&page=",pageNum)
+        newsList<-getUrlListByCategory(pageUrl)
+        
+        for (newslink in newsList$links){
+           tryi<-0
+          tem<-try(getContent(newslink), silent = TRUE)
+          while(tryi<=5&&class(tem)=="try-error"){
+            tem<-try(getContent(newslink), silent = TRUE)
+            tryi<-tryi+1
+          }
+          if(class(tem$datetime)[1]=="POSIXct"){
+               newsData<-rbind(newsData, tem)
+             }
+        }
+        dir.create("./data",showWarnings=F)
+        newsData1<-newsData[c("press","body")]
+        write.csv(newsData1[order(newsData$press),], file=paste0("./data/news",tcate,"_",tscate,"_",strDate,".csv"),row.names = F)
+    }
+  }
+}
+
+
+
+
+newsData[c("press","body"),order(newsData$press),]
