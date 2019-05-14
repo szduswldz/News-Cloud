@@ -1,0 +1,83 @@
+setwd("C:/RPrj")
+library(N2H4)
+cate<-getMainCategory()        
+tcate<-cate$sid1[3]                 
+subCate<-cbind(sid1=tcate,getSubCategory(sid1=tcate))    
+tscate<-subCate$sid2[3]    
+strDate<-"20190514"   
+library(KoNLP)
+useSejongDic()
+library(wordcloud)
+
+newsData<-c()
+    for (sid1 in tcate){
+        for (sid2 in tscate){
+        pageUrl<-paste0("http://news.naver.com/main/list.nhn?sid2=",sid2,"&sid1=",sid1,"&mid=shm&mode=LS2D&date=",strDate)
+          max<-getMaxPageNum(pageUrl)
+      
+          for (pageNum in 1:max){
+            pageUrl<-paste0("http://news.naver.com/main/list.nhn?sid2=",sid2,"&sid1=",sid1,"&mid=shm&mode=LS2D&date=",strDate,"&page=",pageNum)
+            newsList<-getUrlListByCategory(pageUrl)
+        
+            for (newslink in newsList$links){
+               tryi<-0
+              tem<-try(getContent(newslink), silent = TRUE)
+              while(tryi<=5&&class(tem)=="try-error"){
+                tem<-try(getContent(newslink), silent = TRUE)
+                tryi<-tryi+1
+              }
+              if(class(tem$datetime)[1]=="POSIXct"){
+                   newsData<-rbind(newsData, tem)
+                 }
+            }
+            dir.create("./data",showWarnings=F)
+            write.csv(newsData, file=paste0("./data/news",tcate,"_",tscate,"_",strDate,".csv"),row.names = F)
+        }
+    }
+}
+
+library(stringr)
+useSejongDic()
+
+#press_indx<-newsData$press
+
+for(i in length(press_indx)) {
+
+cleaning_text<-function(dat){
+
+    #press_indx<-newsData$press
+    #char<-gsub(press_inex,dat)
+    char<-gsub("[[:cntrl:]]","",dat)
+    char<-gsub("@[[:graph:]]*","",char)
+    char<-gsub("[A-z]","",char)
+    char<-gsub("\\¢º","",char)
+    char<-gsub("¹«´ÜÀüÀç ¹× Àç¹èÆ÷ ±ÝÁö","",char)
+    char<-gsub("±ÝÁö","",char)
+    char<-gsub("Àç¹èÆ÷","",char)
+    char<-gsub("³â","",char)
+    char<-gsub("¹«´Ü","",char)
+    char<-gsub("ÀüÀç","",char)
+    char<-gsub("¹Ù·Î°¡±â","",char)
+    char<-gsub("±âÀÚ","",char)
+    char<-gsub("±¸µ¶","",char)
+    char<-gsub("[^\uAC00-\uD7A3xfe a-zA-Z¤¡-¤¾¤¿-¤Ó°¡-ÆR\\s]","",char,perl=FALSE)
+    char<-gsub("¨Ï","",char)
+}
+
+press_body<-cleaning_text(newsData$body)%>%sapply(extractNoun,USE.NAMES=FALSE) 
+
+press_body1<-unlist(press_body)
+press_body1<-Filter(function(x){nchar(x)>=2},press_body1)
+write(unlist(press_body1),"word.txt")
+press_body2<-read.table("word.txt")
+wordcount<-table(press_body2)
+
+
+#°¡Àå ¸¹ÀÌ ³ª¿Â°Í »óÀ§10°³
+temp<-sort(wordcount,decreasing = T)[1:10]
+temp
+
+library(RColorBrewer)
+
+pal<-brewer.pal(8,"Dark2")
+wordcloud(words=names(wordcount), freq=wordcount, min.freq=2, max.words = 300,random.order=F, rot.per=0.10,scale=c(4,.5), colors=pal)
