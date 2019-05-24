@@ -1,0 +1,103 @@
+setwd("C:/RPrj")
+library(N2H4)
+cate<-getMainCategory()        
+tcate<-cate$sid1[6]                 
+subCate<-cbind(sid1=tcate,getSubCategory(sid1=tcate))    
+tscate<-subCate$sid2[4]    
+strDate<-"20190520"   
+library(KoNLP)
+useSejongDic()
+library(wordcloud)
+
+
+newsData<-c()
+    for (sid1 in tcate){
+        for (sid2 in tscate){
+        pageUrl<-paste0("http://news.naver.com/main/list.nhn?sid2=",sid2,"&sid1=",sid1,"&mid=shm&mode=LS2D&date=",strDate)
+          max<-getMaxPageNum(pageUrl)
+      
+          for (pageNum in 1:max){
+            pageUrl<-paste0("http://news.naver.com/main/list.nhn?sid2=",sid2,"&sid1=",sid1,"&mid=shm&mode=LS2D&date=",strDate,"&page=",pageNum)
+            newsList<-getUrlListByCategory(pageUrl)
+        
+            for (newslink in newsList$links){
+               tryi<-0
+              tem<-try(getContent(newslink), silent = TRUE)
+              while(tryi<=5&&class(tem)=="try-error"){
+                tem<-try(getContent(newslink), silent = TRUE)
+                tryi<-tryi+1
+              }
+              if(class(tem$datetime)[1]=="POSIXct"){
+                   newsData<-rbind(newsData, tem)
+                 }
+            }
+            dir.create("./data",showWarnings=F)
+            write.csv(newsData, file=paste0("./data/news",tcate,"_",tscate,"_",strDate,".csv"),row.names = F)
+        }
+    }
+}
+
+library(stringr)
+useSejongDic()
+
+
+cleaning_text<-function(dat){
+
+    #press_indx<-newsData$press
+    #char<-gsub(press_inex,dat)
+    char<-gsub("[[:cntrl:]]","",dat)
+    char<-gsub("@[[:graph:]]*","",char)
+    char<-gsub("[A-z]","",char)
+    char<-gsub("\\¢º","",char)
+    char<-gsub("¹«´ÜÀüÀç ¹× Àç¹èÆ÷ ±ÝÁö","",char)
+    char<-gsub("±ÝÁö","",char)
+    char<-gsub("Àç¹èÆ÷","",char)
+    char<-gsub("³â","",char)
+    char<-gsub("¹«´Ü","",char)
+    char<-gsub("ÀüÀç","",char)
+    char<-gsub("¹Ù·Î°¡±â","",char)
+    char<-gsub("±âÀÚ","",char)
+    char<-gsub("±¸µ¶","",char)
+    char<-gsub("Ã¤³Î ±¸µ¶ÇÏ±â","",char)
+    char<-gsub("´º½º","",char)
+    char<-gsub("¼î¹Ì´õ","",char)
+    char<-gsub("³×ÀÌ¹ö","",char)
+    char<-gsub("¿¬ÇÕ","",char)
+    char<-gsub("[^\uAC00-\uD7A3xfe a-zA-Z¤¡-¤¾¤¿-¤Ó°¡-ÆR\\s]","",char,perl=FALSE)
+    char<-gsub("¨Ï","",char)
+}
+
+news_body<-cleaning_text(newsData$body)
+news_body<-unlist(news_body)
+news_body<-Filter(function(x){nchar(x)>=2},news_body)
+
+library(tm)
+cps<-Corpus(VectorSource(news_body))
+ko.words <- function(doc){
+  d <- as.characters(doc)
+  extractNoun(d)
+}
+
+
+tdm<-TermDocumentMatrix(cps,
+   control=list( tokenize=ko.words,
+      removePunctuation=T,
+      stopwords=T,
+      removeNumbers=T,
+      wordLengths=c(4,Inf),
+      weighting=weightTfIdf))
+
+tdm.matrix <- as.matrix(tdm)
+word.count <- rowSums(tdm.matrix)
+word.order <- order(word.count, decreasing=T)
+rownames(tdm.matrix)[word.order[1:10]]
+freq.words <- tdm.matrix[word.order[1:10], ]
+co.matrix <- freq.words %*% t(freq.words)
+
+library(qgraph)
+qgraph(co.matrix,
+       labels=rownames(co.matrix),
+       diag=F,
+       layout='spring',
+       edge.color='blue',
+       vsize=log(diag(co.matrix))*2)
