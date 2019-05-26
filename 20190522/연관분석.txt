@@ -1,0 +1,37 @@
+library(igraph)
+library(arules)
+library(combinat)
+library(rJava)
+library(KoNLP)
+setwd("C:/RPrj/data")
+
+rule <- file("newsdata.txt", encoding="UTF-8")
+rules<-readLines(rule)
+close(rule)
+head(rules,10)
+
+tran<-Map(extractNoun, rules)
+tran<-unique(tran)
+tran<-sapply(tran, unique)
+tran<-sapply(tran, function(x) {Filter(function(y){nchar(y) <=4 && nchar(y) >1 && is.hangul(y)},x)})
+tran <- Filter(function(x) {length(x) >= 2}, tran)
+tran
+
+names(tran) <- paste("Tr", 1:length(tran), sep="")
+names(tran)
+wordtran <- as(tran, "transactions")
+wordtran
+
+wordtab<-crossTable(wordtran)
+wordtab
+
+ares <- apriori(wordtran, parameter = list(supp=0.1, conf=0.2))
+inspect(ares)
+
+rules <- labels(ares, ruleSep=" ")
+rules <- sapply(rules, strsplit, " ", USE.NAMES=F)
+rulemat <- do.call("rbind", rules)
+
+ruleg <- graph.edgelist(rulemat[-c(1:6),], directed=F)
+plot.igraph(ruleg, vertex.label=V(ruleg)$name, vertex.label.cex=1,vertex.size=30, layout=layout.fruchterman.reingold.grid)
+closen <- closeness(ruleg)
