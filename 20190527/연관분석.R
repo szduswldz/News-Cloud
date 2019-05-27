@@ -58,6 +58,7 @@ cleaning_text<-function(dat){
     char<-gsub("구독","",char)
     char<-gsub("채널 구독하기","",char)
     char<-gsub("연합","",char)
+    char<-gsub("","",char)
     char<-gsub("[^\uAC00-\uD7A3xfe a-zA-Zㄱ-ㅎㅏ-ㅣ가-R\\s]","",char,perl=FALSE)
     char<-gsub("ⓒ","",char)
 }
