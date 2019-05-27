@@ -9,7 +9,7 @@ library(KoNLP)
 useSejongDic()
 library(wordcloud)
 
-
+#ë‰´ìŠ¤ìˆ˜ì§‘
 newsData<-c()
     for (sid1 in tcate){
         for (sid2 in tscate){
@@ -41,31 +41,35 @@ newsData<-c()
 library(stringr)
 useSejongDic()
 
+#í•„ìš”ì—†ëŠ” ë‹¨ì–´ ì‚­ì œ
 cleaning_text<-function(dat){
     char<-gsub("[[:cntrl:]]","",dat)
     char<-gsub("@[[:graph:]]*","",char)
     char<-gsub("[A-z]","",char)
-    char<-gsub("\\¢º","",char)
-    char<-gsub("¹«´ÜÀüÀç ¹× Àç¹èÆ÷ ±ÝÁö","",char)
-    char<-gsub("±ÝÁö","",char)
-    char<-gsub("Àç¹èÆ÷","",char)
-    char<-gsub("³â","",char)
-    char<-gsub("¹«´Ü","",char)
-    char<-gsub("ÀüÀç","",char)
-    char<-gsub("¹Ù·Î°¡±â","",char)
-    char<-gsub("±âÀÚ","",char)
-    char<-gsub("±¸µ¶","",char)
-    char<-gsub("Ã¤³Î ±¸µ¶ÇÏ±â","",char)
-    char<-gsub("¿¬ÇÕ","",char)
-    char<-gsub("[^\uAC00-\uD7A3xfe a-zA-Z¤¡-¤¾¤¿-¤Ó°¡-ÆR\\s]","",char,perl=FALSE)
-    char<-gsub("¨Ï","",char)
+    char<-gsub("\\â–¶","",char)
+    char<-gsub("ë¬´ë‹¨ì „ìž¬ ë° ìž¬ë°°í¬ ê¸ˆì§€","",char)
+    char<-gsub("ê¸ˆì§€","",char)
+    char<-gsub("ìž¬ë°°í¬","",char)
+    char<-gsub("ë…„","",char)
+    char<-gsub("ë¬´ë‹¨","",char)
+    char<-gsub("ì „ìž¬","",char)
+    char<-gsub("ë°”ë¡œê°€ê¸°","",char)
+    char<-gsub("ê¸°ìž","",char)
+    char<-gsub("êµ¬ë…","",char)
+    char<-gsub("ì±„ë„ êµ¬ë…í•˜ê¸°","",char)
+    char<-gsub("ì—°í•©","",char)
+    char<-gsub("[^\uAC00-\uD7A3xfe a-zA-Zã„±-ã…Žã…-ã…£ê°€-R\\s]","",char,perl=FALSE)
+    char<-gsub("â“’","",char)
 }
 
 
+# ê¸°ì‚¬ë³¸ë¬¸ì— ì–¸ë¡ ì‚¬ëª… ì‚­ì œ
 for (i in 1:length(newsData$press)){
     news_body<-gsub(newsData$press[i],"",news_body)
 }
 
+
+# ë‰´ìŠ¤ í…ìŠ¤íŠ¸ë¥¼ ì •ì œí•˜ì—¬, TermDocumentMatrix ìƒì„±
 news_body<-cleaning_text(newsData$body)
 news_body<-unlist(news_body)
 news_body<-Filter(function(x){nchar(x)>=2},news_body)
@@ -76,7 +80,6 @@ ko.words <- function(doc){
   d <- as.characters(doc)
   extractNoun(d)
 }
-
 
 tdm<-TermDocumentMatrix(cps,
    control=list( tokenize=ko.words,
@@ -93,8 +96,11 @@ rownames(tdm.matrix)[word.order[1:20]]
 freq.words <- tdm.matrix[word.order[1:20], ]
 co.matrix <- freq.words %*% t(freq.words)
 
+
+# ë‹¨ì–´ì™€ ë‹¨ì–´ê°„ì˜ ë¹ˆë„ìˆ˜ì— ë”°ë¼ ë…¸ë“œë³„(ë‹¨ì–´) ê°€ì¤‘ì¹˜ë¥¼ ë¶€ì—¬
 library("tidyr")
 library("dplyr")
+
 
 co.dataframe<-as.data.frame(co.matrix)
 co.dataframe$child = names(co.dataframe)
@@ -117,6 +123,7 @@ library("ggraph")
 library("igraph")
 
 
+#
 png("./data/as_image.png",width=800,height = 600)
 
 p<-co.dataframe%>%
