@@ -41,7 +41,7 @@ newsData<-c()
 library(stringr)
 useSejongDic()
 
-#필요없는 단어 삭제
+#필요없는 단어, 기사 본문 속  삭제
 cleaning_text<-function(dat){
     char<-gsub("[[:cntrl:]]","",dat)
     char<-gsub("@[[:graph:]]*","",char)
@@ -64,16 +64,14 @@ cleaning_text<-function(dat){
     char<-gsub("[^\uAC00-\uD7A3xfe a-zA-Zㄱ-ㅎㅏ-ㅣ가-R\\s]","",char,perl=FALSE)
     char<-gsub("ⓒ","",char)
 }
+news_body<-cleaning_text(newsData$body)
 
-
-# 기사본문에 언론사명 삭제
 for (i in 1:length(newsData$press)){
     news_body<-gsub(newsData$press[i],"",news_body)
 }
 
 
 # 뉴스 텍스트를 정제하여, TermDocumentMatrix 생성
-news_body<-cleaning_text(newsData$body)
 news_body<-unlist(news_body)
 news_body<-Filter(function(x){nchar(x)>=2},news_body)
 
